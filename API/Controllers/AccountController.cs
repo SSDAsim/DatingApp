@@ -4,16 +4,18 @@ using System.Text;
 using API.Data;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
+using API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
-public class AccountController(AppDbContext context) : BaseApiController
+public class AccountController(AppDbContext context, ITokenService tokenService) : BaseApiController
 {
     [HttpPost("register")] // api/account/register
     // public async Task<ActionResult<AppUser>> Register (string email, string displayName, string password)
-    public async Task<ActionResult<AppUser>> Register (RegisterDto registerDto)
+    public async Task<ActionResult<UserDto>> Register (RegisterDto registerDto)
     {
         // check if email exists
         if(await EmailExists(registerDto.Email)) return BadRequest("Email Already Taken"); 
@@ -32,12 +34,12 @@ public class AccountController(AppDbContext context) : BaseApiController
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        return user;
+        return user.ToDto(tokenService);
     }
 
     // check login credentials of the user 
     [HttpPost("login")]
-    public async Task<ActionResult<AppUser>> Login(LoginDto loginDto)
+    public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
     {
         var user = await context.Users.SingleOrDefaultAsync(x => x.Email == loginDto.Email);
 
@@ -55,7 +57,7 @@ public class AccountController(AppDbContext context) : BaseApiController
             if (computedHash[i] != user.PasswordHash[i]) return Unauthorized("Invalid Password");
         }
 
-        return user;
+        return user.ToDto(tokenService);
     }
 
     // Check whehter an email already exists in the database or not
