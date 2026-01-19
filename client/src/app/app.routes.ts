@@ -5,6 +5,9 @@ import { MemberDetailed } from '../features/members/member-detailed/member-detai
 import { Lists } from '../features/lists/lists';
 import { Messages } from '../features/messages/messages';
 import { authGuard } from '../core/gurads/auth-guard';
+import { TestErrors } from '../features/test-errors/test-errors';
+import { NotFound } from '../shared/error/not-found/not-found';
+import { ServerError } from '../shared/error/server-error/server-error';
 
 export const routes: Routes = [
     {path: '', component: Home},
@@ -19,5 +22,7 @@ export const routes: Routes = [
             {path: 'messages', component: Messages},
         ]
     },
-    {path: '**', component: Home} // this is wild-card route (when no route matches then this will be hit)
+    {path: 'errors', component: TestErrors},
+    {path: 'server-error', component: ServerError},
+    {path: '**', component: NotFound} // this is wild-card route (when no route matches then this will be hit)
 ];
