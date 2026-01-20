@@ -23,6 +23,9 @@ builder.Services.AddCors();
 // register Token Service
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+// Register IMemberRepository as Service
+builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -48,4 +51,20 @@ app.UseAuthorization(); // answers is user allowed to do the task
 
 app.MapControllers();
 
+// since we can not use dependency injection inside Program.cs, we have to use this approach
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+
+try
+{
+    var context = services.GetRequiredService<AppDbContext>();
+    await context.Database.MigrateAsync(); // this will run any pending migrations and also create a new database if the database does not exist
+    await Seed.SeedUsers(context); // seed the database
+} catch (Exception ex)
+{
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occured during migration");
+}
+
+// this will run the app, anything after this will be too late to be executed
 app.Run();
