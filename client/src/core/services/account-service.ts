@@ -3,12 +3,14 @@ import { inject, Injectable, signal } from '@angular/core';
 import { LoginCreds, RegisterCreds, User } from '../../types/user';
 import { tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { MemberService } from './member-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AccountService {
   private http = inject(HttpClient);
+  private memberService = inject(MemberService);
   public currentUser = signal<User | null>(null);
 
   baseUrl = environment.apiUrl;
@@ -36,8 +38,8 @@ export class AccountService {
     this.currentUser.set(user);
   }
 
-    logout(){
-      localStorage.removeItem('user');
-      this.currentUser.set(null);
-    }
+  logout(){
+    localStorage.removeItem('user');
+    this.currentUser.set(null);
+  }
 }

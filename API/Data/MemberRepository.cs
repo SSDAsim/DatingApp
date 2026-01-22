@@ -1,8 +1,9 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using API.Interfaces;
+﻿using API.DTOs;
 using API.Entities;
-using API.DTOs;
+using API.Interfaces;
+using Humanizer;
+using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace API.Data;
 
@@ -14,7 +15,17 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
 		// context.Members => 'Members' is the name of the table
 	}
 
-	public async Task<IReadOnlyList<Member>> GetMembersAsync()
+    public async Task<Member?> GetMemberForUpdate(string id)
+    {
+		return await context.Members
+			.Include(x => x.User)
+			.SingleOrDefaultAsync(x => x.Id == id);
+
+        // we could not include(x => x.User) with FindAsync(id) becuase special method that only retrieves the entity by its primary key and does not support loading related data.
+        // SELECT * FROM Members JOIN Users ON Users.Id = Members.UserId WHERE Members.Id = @id
+    }
+
+    public async Task<IReadOnlyList<Member>> GetMembersAsync()
 	{
 		return await context.Members.ToListAsync();
 	}
