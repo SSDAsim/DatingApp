@@ -43,7 +43,10 @@ export class MemberPhotos implements OnInit {
       next: photo => {
         this.memberService.editMode.set(false);
         this.loading.set(false);
-        this.photos.update(photos => [...photos, photo ])
+        this.photos.update(photos => [...photos, photo ]);
+        if(!this.memberService.member()?.imageUrl){
+          this.setMainLocalPhoto(photo);
+        }
       },
       error: error => {
         console.log('Error uploading image.');
@@ -56,15 +59,7 @@ export class MemberPhotos implements OnInit {
     // subscribe to API response
     this.memberService.setMainPhoto(photo).subscribe({
       next: () => {
-        // get the copy of the value in the current user
-        const currentUser = this.accountService.currentUser();
-        if (currentUser) currentUser.imageUrl = photo.url;
-        // update the user in the local storage
-        this.accountService.setCurrentUser(currentUser as User);
-        this.memberService.member.update(member => ({
-          ...member,
-          imageUrl: photo.url
-        }) as Member)
+        this.setMainLocalPhoto(photo);
       }
     })
   }
@@ -76,5 +71,17 @@ export class MemberPhotos implements OnInit {
         this.photos.update(photos => photos.filter(x => x.id !== photoId));
       }
     });
+  }
+
+  private setMainLocalPhoto(photo: Photo){
+    // get the copy of the value in the current user
+    const currentUser = this.accountService.currentUser();
+    if (currentUser) currentUser.imageUrl = photo.url;
+    // update the user in the local storage
+    this.accountService.setCurrentUser(currentUser as User);
+    this.memberService.member.update(member => ({
+      ...member,
+      imageUrl: photo.url
+    }) as Member)
   }
 }
