@@ -19,6 +19,7 @@ public class MemberRepository(AppDbContext context) : IMemberRepository
     {
 		return await context.Members
 			.Include(x => x.User)
+			.Include(x => x.Photos)
 			.SingleOrDefaultAsync(x => x.Id == id);
 
         // we could not include(x => x.User) with FindAsync(id) becuase special method that only retrieves the entity by its primary key and does not support loading related data.

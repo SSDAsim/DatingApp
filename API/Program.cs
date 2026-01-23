@@ -1,5 +1,6 @@
 using System.Text;
 using API.Data;
+using API.Helpers;
 using API.Interfaces;
 using API.Middleware;
 using API.Services;
@@ -22,9 +23,10 @@ builder.Services.AddCors();
 
 // register Token Service
 builder.Services.AddScoped<ITokenService, TokenService>();
-
+builder.Services.AddScoped<IPhotoService, PhotoService>(); // photo upload cloudinary
 // Register IMemberRepository as Service
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
