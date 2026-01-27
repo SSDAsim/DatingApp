@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { EditableMember, Member, Photo } from '../../types/member';
+import { EditableMember, Member, MemberParams, Photo } from '../../types/member';
 import { map, Observable, tap } from 'rxjs';
+import { PaginatedResult } from '../../types/pagination';
 
 @Injectable({
   providedIn: 'root',
@@ -14,10 +15,26 @@ export class MemberService {
 
   member = signal<Member | null>(null);
 
-  getMembers(): Observable<Member[]> {
-    return this.http.get<any>(this.baseUrl + 'members')
-      .pipe(map(response => response.result));
+  getMembers(memberParams: MemberParams) {
+    // pass query parameters
+    let params = new HttpParams();
 
+    params = params.append('pageNumber', memberParams.pageNumber);
+    params = params.append('pageSize', memberParams.pageSize);
+    params = params.append('minAge', memberParams.minAge);
+    params = params.append('maxAge', memberParams.maxAge);
+    params = params.append('orderBy', memberParams.orderBy);
+    
+    if(memberParams.gender) params = params.append('gender', memberParams.gender);
+
+    return this.http
+    .get<any>(this.baseUrl + 'members', { params })
+    .pipe(
+      map(response => response.result),
+      tap(() => {
+        localStorage.setItem('filters', JSON.stringify(memberParams))
+      })
+    );
       // we also need to provide the authentication header which we can pass as second parameter of the .get() 
   }
 

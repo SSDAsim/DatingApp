@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using API.Extensions;
 using API.Services;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -15,9 +16,11 @@ namespace API.Controllers
     public class MembersController(IMemberRepository memberRepository, IPhotoService photoService) : BaseApiController
     {
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers()
+        public async Task<ActionResult<IReadOnlyList<Member>>> GetMembers([FromQuery] MemberParams memberParams)
         {
-            return Ok(memberRepository.GetMembersAsync());
+            memberParams.CurrentMemberId = User.GetMemberId();
+
+            return Ok(memberRepository.GetMembersAsync(memberParams));
         }
 
         [HttpGet("{id}")]  // localhost:5001/api/members/{user-id}
