@@ -14,6 +14,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Photo> Photos { get; set; }
     public DbSet<MemberLike> Likes { get; set; }
 
+    public DbSet<Message> Messages { get; set; }
+
     // 'DbSet<T> <table_name>' represents a database table
 
     // change the date format 
@@ -21,6 +23,19 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(modelBuilder);
 
+        // --- Configure many-to-many relationship between members and messages 
+        // one recipient has many messages, deleting a recipient should not delete the messages
+        modelBuilder.Entity<Message>()
+            .HasOne(r => r.Recipient)
+            .WithMany(m => m.MessagesReceived)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(x => x.Sender)
+            .WithMany(m => m.MessagesSent)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // -- many-to-many relationship between members and likes
         // declare a primary key as combination of both SourceMemberId and TargetMemberId
         // since the many-to-many relationship between User models based on likes is something we have to configure ourselves so that's why we are doing it heree
         modelBuilder.Entity<MemberLike>().HasKey(x => new { x.SourceMemberId, x.TargetMemberId });
@@ -43,6 +58,12 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
         );
 
+        // value converter for optional datetime
+        var optionalDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+            v => v.HasValue ? v.Value.ToUniversalTime() : null,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : null
+        );
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties())
@@ -50,6 +71,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
                 if(property.ClrType == typeof(DateTime))
                 {
                     property.SetValueConverter(dateTimeConverter);
+                } else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(optionalDateTimeConverter);
                 }
             }
         }

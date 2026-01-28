@@ -29,6 +29,11 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
     invalidateCache('/likes');
   }
 
+   if(req.method.includes('POST') && req.url.includes('/messages')) {
+    invalidateCache('/messages');
+  }
+
+
   // using the following method, we would not have to hit the get api again and again for response. we are going to get the response from the cache
   if(req.method === 'GET'){
     const cachedResponse = cache.get(cacheKey);

@@ -27,6 +27,7 @@ builder.Services.AddScoped<IPhotoService, PhotoService>(); // photo upload cloud
 // Register IMemberRepository as Service
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<ILikesRepository, LikesRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 // this is going to update the lastActive property when an authenticated user does something
 builder.Services.AddScoped<LogUserActivity>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
