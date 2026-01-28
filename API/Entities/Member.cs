@@ -22,6 +22,10 @@ namespace API.Entities
         public List<Photo> Photos { get; set; } = [];
 
         [JsonIgnore]
+        public List<MemberLike> LikedByMembers { get; set; } = [];
+        public List<MemberLike> LikedMembers { get; set; } = [];
+
+        [JsonIgnore]
         [ForeignKey(nameof(Id))]
         // The property which is going to relate Member to the AppUser. From Member, we will be able to access AppUser
         public AppUser User { get; set; } = null!;

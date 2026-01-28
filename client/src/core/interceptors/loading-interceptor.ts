@@ -13,7 +13,21 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
     return paramString ? `${url}?${paramString}` : url;
   }
 
+  // we might do not need cache for every http request so we have to invaildate cache for certain http request
+  const invalidateCache = (urlPattern: string) => {
+    for (const key of cache.keys()){
+      if (key.includes(urlPattern)){
+        cache.delete(key);
+        console.log(`Cache invalidated for: ${key}`);
+      }
+    }
+  };
+
   const cacheKey = generateCacheKey(req.url, req.params);
+
+  if(req.method.includes('POST') && req.url.includes('/likes')) {
+    invalidateCache('/likes');
+  }
 
   // using the following method, we would not have to hit the get api again and again for response. we are going to get the response from the cache
   if(req.method === 'GET'){
