@@ -1,14 +1,15 @@
-using System;
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
 
 namespace API.Data;
 
-public class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions options) : IdentityDbContext<AppUser>(options)
 {
-    public DbSet<AppUser> Users { get; set; }
-
     public DbSet<Member> Members { get; set; }
 
     public DbSet<Photo> Photos { get; set; }
@@ -22,6 +23,13 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<IdentityRole>()
+            .HasData(
+            new IdentityRole {Id = "member-id", Name = "Member", NormalizedName = "MEMBER" },
+            new IdentityRole { Id = "moderator-id", Name = "Moderator", NormalizedName = "MODERATOR" },
+            new IdentityRole { Id = "admin-id", Name = "Admin", NormalizedName = "ADMIN" }
+            );
 
         // --- Configure many-to-many relationship between members and messages 
         // one recipient has many messages, deleting a recipient should not delete the messages
@@ -77,5 +85,11 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
                 }
             }
         }
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(warnings =>
+            warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 }

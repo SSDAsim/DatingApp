@@ -1,17 +1,16 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace API.Entities;
 
-public class AppUser
+public class AppUser : IdentityUser
 {
     // defined string properties 
     // you have to either mark is as 'required' or assign some initial value to avoid 'Null Reference Problem'. 
-    public string Id { get; set; } = Guid.NewGuid().ToString(); // assing some unique id to the object
 
     public required string DisplayName { get; set; }
-    public required string Email { get; set; }
     public string? ImageUrl { get; set; }
-    public required byte[] PasswordHash { get; set; }
-
-    public required byte[] PasswordSalt { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiry { get; set; }
 
     // Nav Property related to Member class
     public Member Member { get; set; } = null!; 

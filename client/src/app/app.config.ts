@@ -23,7 +23,7 @@ export const appConfig: ApplicationConfig = {
         setTimeout(async () => {
           try{
             // load the auth user
-            return lastValueFrom(initService.init());
+            await lastValueFrom(initService.init());
           } finally {
             // when the user is loaded, remove the splash screen
             const splash = document.getElementById('initial-splash');

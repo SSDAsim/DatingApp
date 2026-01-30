@@ -1,16 +1,17 @@
-using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using API.Entities;
 using API.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Services;
 
-public class TokenService(IConfiguration config) : ITokenService
+public class TokenService(IConfiguration config, UserManager<AppUser> userManager) : ITokenService
 {
-    public string CreateToken(AppUser user)
+    public async Task<string> CreateToken(AppUser user)
     {
         var tokenKey = config["TokenKey"] ?? throw new Exception("Cannot get Token Key"); // TokenKey is provided by the Server 
 
@@ -23,9 +24,12 @@ public class TokenService(IConfiguration config) : ITokenService
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Email, user.Email!),
             new(ClaimTypes.NameIdentifier, user.Id)
         };
+
+        var roles = await userManager.GetRolesAsync(user);
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         // sign the token 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
@@ -33,7 +37,7 @@ public class TokenService(IConfiguration config) : ITokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(7), // usually the expiry is 10 mins and it is refreshed again and again
+            Expires = DateTime.UtcNow.AddMinutes(7), // usually the expiry is 10 mins and it is refreshed again and again
             SigningCredentials = creds,
         };
 
@@ -43,6 +47,14 @@ public class TokenService(IConfiguration config) : ITokenService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         
         return tokenHandler.WriteToken(token);
+    }
+
+    // generate new token 
+    // we are going to store this token along with the user object in the database for longer period of time and we are going to return it to the client browser as a cookie, an http only secure cookie
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
     }
 
     // from NUGET, install System.IdentityModel.Tokens.JWT @Microsoft and Microsoft.IdentityModel.Tokens @Microsoft

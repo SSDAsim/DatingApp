@@ -5,17 +5,19 @@ using API.DTOs;
 using System.Security.Cryptography;
 using API.Entities;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Build.Evaluation;
 
 
 namespace API.Data;
 
 public class Seed
 {
-	public static async Task SeedUsers(AppDbContext context)
+	public static async Task SeedUsers(UserManager<AppUser> userManager)
 	{
 		// this method will be run whenever the app is going to be started, so we apply a check if the 'users' table already has some data, do not run this method.
 
-		if (await context.Users.AnyAsync()) return;
+		if (await userManager.Users.AnyAsync()) return;
 
 		// seed user data 
 		// read from the data file
@@ -33,17 +35,13 @@ public class Seed
 		// map data from seed data file to the properties of our entities 
 		foreach (var member in members)
 		{
-            // we need to calculate the hash so
-            using var hmac = new HMACSHA512();
-
             var user = new AppUser
 			{
 				Id = member.Id,
 				Email = member.Email,
+				UserName = member.Email,
 				DisplayName = member.DisplayName,
 				ImageUrl = member.ImageUrl,
-				PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("Pa$$w0rd")),
-				PasswordSalt = hmac.Key,
 				Member = new Member
 				{
 					Id = member.Id,
@@ -65,10 +63,22 @@ public class Seed
 				MemberId = member.Id,
 			});
 
-			context.Users.Add(user); // this is going to track user in the memory
+			var result = await userManager.CreateAsync(user, "Pa$$w0rd");
+			if (!result.Succeeded)
+			{
+				Console.WriteLine(result.Errors.First().Description);
+			}
+			await userManager.AddToRoleAsync(user, "Member");
 		}
 
-		// Save changes to the database 
-		await context.SaveChangesAsync();
+		var admin = new AppUser
+		{
+			UserName = "admin@test.com",
+			Email = "admin@test.com",
+			DisplayName = "Admin"
+		};
+
+		await userManager.CreateAsync(admin, "Pa$$w0rd");
+		await userManager.AddToRolesAsync(admin, ["Admin", "Moderator"]);
 	}
 }

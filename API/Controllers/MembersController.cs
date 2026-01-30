@@ -113,7 +113,7 @@ namespace API.Controllers
                 return BadRequest("Cannot set this as main image.");
             }
 
-            member.ImageUrl = photo.Url;
+            member.ImageUrl = photo!.Url;
             member.User.ImageUrl = photo.Url;
 
             if (await memberRepository.SaveAllAsync()) return NoContent(); // 204 No Content
