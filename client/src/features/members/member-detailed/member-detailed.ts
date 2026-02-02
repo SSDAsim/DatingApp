@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { Member } from '../../../types/member';
 import { AgePipe } from '../../../core/pipes/age-pipe';
 import { AccountService } from '../../../core/services/account-service';
+import { PresenceService } from '../../../core/services/presence-service';
 
 @Component({
   selector: 'app-member-detailed',
@@ -15,6 +16,7 @@ import { AccountService } from '../../../core/services/account-service';
 export class MemberDetailed implements OnInit {
   protected memberService = inject(MemberService);
   private accountService = inject(AccountService);
+  protected presenceService = inject(PresenceService);
   private route = inject(ActivatedRoute); // this will help us to get the query parameter
   private router = inject(Router);
   protected title = signal<string | undefined>('Profile'); 

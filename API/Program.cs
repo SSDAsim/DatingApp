@@ -5,7 +5,9 @@ using API.Helpers;
 using API.Interfaces;
 using API.Middleware;
 using API.Services;
+using API.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -31,6 +33,8 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 // this is going to update the lastActive property when an authenticated user does something
 builder.Services.AddScoped<LogUserActivity>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<PresenceTracker>();
 
 builder.Services.AddIdentityCore<AppUser>(opt =>
 {
@@ -51,6 +55,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false
        };
+
+        // SignalR authentication configuration
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // register policies
@@ -68,7 +89,14 @@ app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrig
 app.UseAuthentication(); // answers who is the user 
 app.UseAuthorization(); // answers is user allowed to do the task
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
+app.MapHub<PresenceHub>("hubs/presence");
+app.MapHub<MessageHub>("hubs/messages");
+
+app.MapFallbackToController("Index", "Fallback");
 
 // since we can not use dependency injection inside Program.cs, we have to use this approach
 using var scope = app.Services.CreateScope();
